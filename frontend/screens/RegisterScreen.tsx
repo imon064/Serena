@@ -94,6 +94,7 @@ export const RegisterScreen: React.FC<Props> = ({ onGoToLogin }) => {
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
+        <View style={styles.content}>
         <Text style={styles.title}>Create Your Account</Text>
         <Text style={styles.subtitle}>
           Start your journey to a healthier and happier mind.
@@ -164,6 +165,7 @@ export const RegisterScreen: React.FC<Props> = ({ onGoToLogin }) => {
             <Text style={styles.link}>Sign In</Text>
           </TouchableOpacity>
         </View>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -171,7 +173,8 @@ export const RegisterScreen: React.FC<Props> = ({ onGoToLogin }) => {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
-  container: { padding: 24, paddingTop: 64, flexGrow: 1 },
+  container: { padding: 24, paddingTop: 64, flexGrow: 1, justifyContent: 'center' },
+  content: { width: '100%', maxWidth: 440, alignSelf: 'center' },
   title: {
     fontSize: 28,
     fontWeight: '800',

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginScreen } from './screens/LoginScreen';
 import { RegisterScreen } from './screens/RegisterScreen';
@@ -34,12 +34,14 @@ const Root: React.FC = () => {
 
 export default function App() {
   return (
-    <SafeAreaView style={styles.flex} edges={['top']}>
-      <StatusBar style="dark" />
-      <AuthProvider>
-        <Root />
-      </AuthProvider>
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.flex} edges={['top']}>
+        <StatusBar style="dark" />
+        <AuthProvider>
+          <Root />
+        </AuthProvider>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
