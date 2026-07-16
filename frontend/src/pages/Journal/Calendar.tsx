@@ -2,12 +2,14 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight, Flame, BookOpen } from 'lucide-react';
 import { useJournal } from '../../context/JournalContext';
+import { useAuth } from '../../context/AuthContext';
 import { CalendarGrid } from '../../components/CalendarGrid';
 import { BottomNav } from '../../components/BottomNav';
 
 export const JournalCalendar: React.FC = () => {
   const navigate = useNavigate();
   const { selectedDate, setSelectedDate, entries, streakCount } = useJournal();
+  const { signOut } = useAuth();
 
 
   const hasJournalForSelectedDate = !!entries[selectedDate];
@@ -20,8 +22,9 @@ export const JournalCalendar: React.FC = () => {
     }
   };
 
-  const handleBackToLogin = () => {
-    if (confirm('Back to login screen?')) {
+  const handleBackToLogin = async () => {
+    if (confirm('Sign out and return to the login screen?')) {
+      await signOut();
       navigate('/login');
     }
   };

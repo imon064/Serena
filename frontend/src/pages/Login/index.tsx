@@ -5,13 +5,17 @@ import { AuthLayout } from '../../layouts/AuthLayout';
 import { InputField } from '../../components/InputField';
 import { Button } from '../../components/Button';
 import { SocialButton } from '../../components/SocialButton';
+import { useAuth } from '../../context/AuthContext';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const { signInWithPassword, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [formError, setFormError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const validate = () => {
     const newErrors: { email?: string; password?: string } = {};
@@ -29,15 +33,36 @@ export const LoginPage: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError('');
     if (!validate()) return;
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await signInWithPassword(email, password);
       navigate('/journal');
-    }, 1000);
+    } catch (err) {
+      setFormError(
+        err instanceof Error ? err.message : 'Unable to sign in. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogle = async () => {
+    setFormError('');
+    setIsGoogleLoading(true);
+    try {
+      // Redirects to Google; on success the browser returns to /journal.
+      await signInWithGoogle();
+    } catch (err) {
+      setFormError(
+        err instanceof Error ? err.message : 'Google sign-in failed. Please try again.'
+      );
+      setIsGoogleLoading(false);
+    }
   };
 
   return (
@@ -52,6 +77,12 @@ export const LoginPage: React.FC = () => {
 
         <div className="w-full bg-white rounded-[32px] shadow-card px-6 py-8 sm:px-8 sm:py-10 border border-slate-100/50">
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            {formError && (
+              <div className="text-sm font-medium text-red-600 bg-red-50 border border-red-100 rounded-2xl px-4 py-3 text-left">
+                {formError}
+              </div>
+            )}
+
             <InputField
               label="Email Address"
               id="email"
@@ -102,7 +133,8 @@ export const LoginPage: React.FC = () => {
           <div className="flex flex-col gap-3">
             <SocialButton
               provider="google"
-              onClick={() => alert('Google authentication (Demo only)')}
+              onClick={handleGoogle}
+              disabled={isGoogleLoading}
             />
             <SocialButton
               provider="apple"
