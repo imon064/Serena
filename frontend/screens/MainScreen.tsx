@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity, Text, SafeAreaView } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../lib/theme';
 import { HomeTab } from './tabs/HomeTab';
 import { AIChatTab } from './tabs/AIChatTab';
+import { ProfileTab } from './tabs/ProfileTab';
 
 type TabType = 'Home' | 'AIChat' | 'Journal' | 'Profile';
 
@@ -23,11 +25,7 @@ export const MainScreen: React.FC = () => {
           </View>
         );
       case 'Profile':
-        return (
-          <View style={styles.placeholderContainer}>
-            <Text style={styles.placeholderText}>Profile Screen (Dummy)</Text>
-          </View>
-        );
+        return <ProfileTab />;
       default:
         return null;
     }
