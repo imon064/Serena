@@ -7,6 +7,7 @@ import { HomeTab } from './tabs/HomeTab';
 import { AIChatTab } from './tabs/AIChatTab';
 import { ProfileTab } from './tabs/ProfileTab';
 import { JournalTab } from './tabs/JournalTab';
+import { ChatProvider } from '../context/ChatContext';
 
 type TabType = 'Home' | 'AIChat' | 'Journal' | 'Profile';
 
@@ -41,9 +42,10 @@ export const MainScreen: React.FC = () => {
   ] as const;
 
   return (
+    <ChatProvider>
     <View style={styles.container}>
       <View style={styles.content}>{renderContent()}</View>
-      
+
       <SafeAreaView edges={['bottom']} style={styles.navBar}>
         {navItems.map((item) => {
           const isActive = activeTab === item.id;
@@ -68,6 +70,7 @@ export const MainScreen: React.FC = () => {
         })}
       </SafeAreaView>
     </View>
+    </ChatProvider>
   );
 };
 

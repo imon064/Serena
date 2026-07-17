@@ -1,29 +1,59 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  StyleSheet, View, Text, TouchableOpacity, TextInput, 
-  ScrollView, Image, Modal, Animated, Dimensions, TouchableWithoutFeedback
+import {
+  StyleSheet, View, Text, TouchableOpacity, TextInput,
+  ScrollView, Modal, Animated, Dimensions, TouchableWithoutFeedback
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../../lib/theme';
 import { notify } from '../../lib/notify';
+import { sendChat, type ChatMessage } from '../../lib/ai';
+import { supabase } from '../../lib/supabase';
+import { getFirstName } from '../../lib/userName';
+import { useChat, type UiMessage } from '../../context/ChatContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const DUMMY_HISTORY = [
-  { id: '1', title: 'Work Stress...', preview: 'I understand how that deadline...', time: '10:45 AM', date: 'TODAY' },
-  { id: '2', title: 'Morning Anxiety', preview: 'That\'s a great observation...', time: '8:30 AM', date: 'TODAY' },
-  { id: '3', title: 'Daily Check-in', preview: 'You\'ve made significant progress...', time: '9:15 PM', date: 'YESTERDAY' },
-  { id: '4', title: 'Social Settings', preview: 'Remember the grounding...', time: '2:00 PM', date: 'YESTERDAY' },
-];
+// Turn a stored timestamp into a friendly "10:45 AM" label for the drawer.
+const formatTime = (ts: number) =>
+  new Date(ts).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 
 export const AIChatTab: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const slideAnim = useRef(new Animated.Value(-SCREEN_WIDTH * 0.8)).current;
-  
-  // Chat state
-  const [messages, setMessages] = useState<any[]>([]);
-  const [showInitialGreeting, setShowInitialGreeting] = useState(true);
+
+  // Chat state lives in a shared provider so it survives switching tabs and
+  // app restarts, and powers the history drawer.
+  const {
+    sessions,
+    currentSessionId,
+    currentMessages: messages,
+    startNewChat,
+    openSession,
+    addMessage,
+  } = useChat();
   const [inputText, setInputText] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [firstName, setFirstName] = useState('there');
+
+  // Show the greeting + emotion chips whenever the current chat is empty.
+  const showInitialGreeting = messages.length === 0;
+
+  // Ref to the chat scroll view so we can scroll to the newest message.
+  const scrollRef = useRef<ScrollView>(null);
+
+  // The AI's opening line. Kept here so we can also feed it to the model as
+  // context, so it remembers how the conversation began.
+  const greetingText = `Hello ${firstName}. I'm here to listen. How are you feeling right now?`;
+
+  // Grab the signed-in user's first name for a warm, personal greeting.
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setFirstName(getFirstName(data.user));
+    });
+  }, []);
 
   const openDrawer = () => {
     setIsDrawerOpen(true);
@@ -45,24 +75,61 @@ export const AIChatTab: React.FC = () => {
   };
 
   const startNewSession = () => {
-    setMessages([]);
-    setShowInitialGreeting(true);
+    startNewChat();
     closeDrawer();
   };
 
-  const sendMessage = () => {
-    if (!inputText.trim()) return;
-    setMessages([...messages, { id: Date.now().toString(), text: inputText, sender: 'user' }]);
-    setInputText('');
+  const handleOpenSession = (id: string) => {
+    openSession(id);
+    closeDrawer();
   };
 
-  // Send a canned message (used by the emotion chips) as if the user typed it.
-  const sendQuick = (text: string) => {
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now().toString(), text, sender: 'user' },
-    ]);
+  // Core send routine: append the user's message, ask GPT (via our Edge
+  // Function) for a reply, then append Serena's response.
+  const send = async (rawText: string) => {
+    const text = rawText.trim();
+    if (!text || isSending) return;
+
+    const userMsg: UiMessage = {
+      id: `${Date.now()}-user`,
+      text,
+      sender: 'user',
+    };
+    // Capture the conversation *before* this message for the API history.
+    const nextMessages = [...messages, userMsg];
+    addMessage(userMsg);
+    setInputText('');
+    setIsSending(true);
+
+    // Build the conversation for OpenAI: the greeting first (so Serena has
+    // context), then every message shown in the UI.
+    const history: ChatMessage[] = [
+      { role: 'assistant', content: greetingText },
+      ...nextMessages.map((m): ChatMessage => ({
+        role: m.sender === 'user' ? 'user' : 'assistant',
+        content: m.text,
+      })),
+    ];
+
+    try {
+      const reply = await sendChat(history, firstName);
+      addMessage({ id: `${Date.now()}-bot`, text: reply, sender: 'bot' });
+    } catch (err) {
+      // Keep the failure gentle and on-brand rather than a scary error.
+      addMessage({
+        id: `${Date.now()}-bot`,
+        text: "I'm having a little trouble connecting right now. Let's take a slow breath together, and try again in a moment. 🌿",
+        sender: 'bot',
+      });
+    } finally {
+      setIsSending(false);
+    }
   };
+
+  const sendMessage = () => send(inputText);
+
+  // Send a canned message (used by the emotion chips) as if the user typed it.
+  const sendQuick = (text: string) => send(text);
 
   return (
     <View style={styles.container}>
@@ -74,10 +141,7 @@ export const AIChatTab: React.FC = () => {
         
         <View style={styles.headerCenter}>
           <View style={styles.avatarContainer}>
-            <Image
-              source={{ uri: 'https://i.pravatar.cc/100?img=5' }}
-              style={styles.avatarImage}
-            />
+            <Feather name="message-circle" size={20} color={colors.brand} />
           </View>
           <View style={styles.headerTextContainer}>
             <Text style={styles.botName}>Serena AI</Text>
@@ -93,7 +157,12 @@ export const AIChatTab: React.FC = () => {
       </View>
 
       {/* Main Chat Area */}
-      <ScrollView style={styles.chatArea} contentContainerStyle={styles.chatContent}>
+      <ScrollView
+        ref={scrollRef}
+        style={styles.chatArea}
+        contentContainerStyle={styles.chatContent}
+        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+      >
         {showInitialGreeting && (
           <>
             <View style={styles.dateSeparator}>
@@ -102,32 +171,34 @@ export const AIChatTab: React.FC = () => {
             
             <View style={styles.botMessageRow}>
               <View style={styles.botMessageAvatar}>
-                 <Text style={styles.botAvatarEmoji}>🤖</Text>
+                 <Feather name="message-circle" size={16} color={colors.brand} />
               </View>
               <View style={styles.botMessageBubble}>
                 <Text style={styles.botMessageText}>
-                  Hello Jason. I'm here to listen. How are you feeling right now?
+                  {greetingText}
                 </Text>
               </View>
             </View>
             <Text style={styles.messageTime}>10:02 AM</Text>
 
-            {/* Emotion Chips */}
+            {/* Emotion Chips + Journal card — only before the conversation begins */}
+            {messages.length === 0 && (
+            <>
             <View style={styles.chipsContainer}>
               <View style={styles.chipRow}>
                 <TouchableOpacity style={styles.chip} onPress={() => sendQuick('😌 Peaceful')}>
                   <Text style={styles.chipText}>😌 Peaceful</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.chip} onPress={() => sendQuick('😵‍💫 Anxious')}>
-                  <Text style={styles.chipText}>😵‍💫 Anxious</Text>
+                <TouchableOpacity style={styles.chip} onPress={() => sendQuick('😟 Anxious')}>
+                  <Text style={styles.chipText}>😟 Anxious</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.chipRow}>
-                <TouchableOpacity style={styles.chip} onPress={() => sendQuick('🌪️ Overwhelmed')}>
-                  <Text style={styles.chipText}>🌪️ Overwhelmed</Text>
+                <TouchableOpacity style={styles.chip} onPress={() => sendQuick('😩 Overwhelmed')}>
+                  <Text style={styles.chipText}>😩 Overwhelmed</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.chip} onPress={() => sendQuick('🌿 Reflective')}>
-                  <Text style={styles.chipText}>🌿 Reflective</Text>
+                <TouchableOpacity style={styles.chip} onPress={() => sendQuick('🙂 Reflective')}>
+                  <Text style={styles.chipText}>🙂 Reflective</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -143,16 +214,41 @@ export const AIChatTab: React.FC = () => {
               </Text>
               <View style={styles.cardLeftBorder} />
             </View>
+            </>
+            )}
           </>
         )}
-        
-        {messages.map((msg) => (
-          <View key={msg.id} style={styles.userMessageRow}>
-            <View style={styles.userMessageBubble}>
-              <Text style={styles.userMessageText}>{msg.text}</Text>
+
+        {messages.map((msg) =>
+          msg.sender === 'user' ? (
+            <View key={msg.id} style={styles.userMessageRow}>
+              <View style={styles.userMessageBubble}>
+                <Text style={styles.userMessageText}>{msg.text}</Text>
+              </View>
+            </View>
+          ) : (
+            <View key={msg.id} style={styles.botMessageRow}>
+              <View style={styles.botMessageAvatar}>
+                <Feather name="message-circle" size={16} color={colors.brand} />
+              </View>
+              <View style={styles.botMessageBubble}>
+                <Text style={styles.botMessageText}>{msg.text}</Text>
+              </View>
+            </View>
+          )
+        )}
+
+        {/* "Serena is typing…" indicator while we wait for GPT */}
+        {isSending && (
+          <View style={styles.botMessageRow}>
+            <View style={styles.botMessageAvatar}>
+              <Feather name="message-circle" size={16} color={colors.brand} />
+            </View>
+            <View style={styles.botMessageBubble}>
+              <Text style={styles.typingText}>Serena is typing…</Text>
             </View>
           </View>
-        ))}
+        )}
       </ScrollView>
 
       {/* Input Area */}
@@ -180,9 +276,10 @@ export const AIChatTab: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity 
-          style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]} 
+        <TouchableOpacity
+          style={[styles.sendButton, (!inputText.trim() || isSending) && styles.sendButtonDisabled]}
           onPress={sendMessage}
+          disabled={!inputText.trim() || isSending}
         >
           <Feather name="send" size={20} color={colors.white} />
         </TouchableOpacity>
@@ -205,27 +302,35 @@ export const AIChatTab: React.FC = () => {
               </View>
               
               <ScrollView style={styles.historyList}>
-                <Text style={styles.historySectionTitle}>TODAY</Text>
-                {DUMMY_HISTORY.filter(h => h.date === 'TODAY').map(item => (
-                  <TouchableOpacity key={item.id} style={styles.historyItem} onPress={closeDrawer}>
-                    <View style={styles.historyItemHeader}>
-                      <Text style={styles.historyItemTitle}>{item.title}</Text>
-                      <Text style={styles.historyItemTime}>{item.time}</Text>
-                    </View>
-                    <Text style={styles.historyItemPreview} numberOfLines={1}>{item.preview}</Text>
-                  </TouchableOpacity>
-                ))}
-
-                <Text style={[styles.historySectionTitle, { marginTop: 20 }]}>YESTERDAY</Text>
-                {DUMMY_HISTORY.filter(h => h.date === 'YESTERDAY').map(item => (
-                  <TouchableOpacity key={item.id} style={styles.historyItem} onPress={closeDrawer}>
-                    <View style={styles.historyItemHeader}>
-                      <Text style={styles.historyItemTitle}>{item.title}</Text>
-                      <Text style={styles.historyItemTime}>{item.time}</Text>
-                    </View>
-                    <Text style={styles.historyItemPreview} numberOfLines={1}>{item.preview}</Text>
-                  </TouchableOpacity>
-                ))}
+                {sessions.length === 0 ? (
+                  <Text style={styles.historyEmpty}>
+                    No past chats yet. Start a conversation and it will appear here.
+                  </Text>
+                ) : (
+                  sessions.map((session) => {
+                    const last = session.messages[session.messages.length - 1];
+                    const isActive = session.id === currentSessionId;
+                    return (
+                      <TouchableOpacity
+                        key={session.id}
+                        style={[styles.historyItem, isActive && styles.historyItemActive]}
+                        onPress={() => handleOpenSession(session.id)}
+                      >
+                        <View style={styles.historyItemHeader}>
+                          <Text style={styles.historyItemTitle} numberOfLines={1}>
+                            {session.title}
+                          </Text>
+                          <Text style={styles.historyItemTime}>
+                            {formatTime(session.updatedAt)}
+                          </Text>
+                        </View>
+                        <Text style={styles.historyItemPreview} numberOfLines={1}>
+                          {last?.text ?? ''}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })
+                )}
               </ScrollView>
               
               <View style={styles.drawerFooter}>
@@ -272,8 +377,10 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.border,
+    backgroundColor: colors.brandFaint,
     overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatarImage: {
     width: '100%',
@@ -352,6 +459,12 @@ const styles = StyleSheet.create({
     color: colors.brand,
     lineHeight: 22,
     fontWeight: '500',
+  },
+  typingText: {
+    fontSize: 15,
+    color: colors.slate400,
+    lineHeight: 22,
+    fontStyle: 'italic',
   },
   messageTime: {
     fontSize: 11,
@@ -528,6 +641,18 @@ const styles = StyleSheet.create({
   },
   historyItem: {
     marginBottom: 20,
+  },
+  historyItemActive: {
+    backgroundColor: colors.brandFaint,
+    borderRadius: 12,
+    padding: 12,
+    marginHorizontal: -12,
+    marginBottom: 8,
+  },
+  historyEmpty: {
+    fontSize: 13,
+    color: colors.slate400,
+    lineHeight: 20,
   },
   historyItemHeader: {
     flexDirection: 'row',

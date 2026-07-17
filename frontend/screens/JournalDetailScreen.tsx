@@ -86,7 +86,7 @@ export const JournalDetailScreen: React.FC<Props> = ({
               <Icon name="share" size={16} color={colors.slate600} />
             </Pressable>
             <Pressable onPress={() => onEdit(date)} style={styles.smallBtnBrand}>
-              <Icon name="edit" size={15} color={colors.brand} />
+              <Icon name="edit" size={15} color={colors.white} />
             </Pressable>
           </View>
         </View>
@@ -153,36 +153,53 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.slate100,
   },
+  // Soft, floating white buttons for secondary actions (back, share).
   circleBtn: {
     width: 40,
     height: 40,
     borderRadius: 999,
-    backgroundColor: colors.slate50,
+    backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.slate100,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: colors.slate800,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   brandName: { fontSize: 16, fontWeight: '800', color: colors.dark },
   headerSub: { fontSize: 10, fontWeight: '700', color: colors.slate400, letterSpacing: 1, marginTop: 2 },
-  headerActions: { flexDirection: 'row', gap: 8 },
+  headerActions: { flexDirection: 'row', gap: 10 },
   smallBtn: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     borderRadius: 999,
-    backgroundColor: colors.slate50,
+    backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.slate100,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: colors.slate800,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
+  // Filled brand button for the primary action (edit) — stands out gently.
   smallBtnBrand: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     borderRadius: 999,
-    backgroundColor: colors.brandTint,
+    backgroundColor: colors.brand,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: colors.brand,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   body: { paddingHorizontal: 24, paddingVertical: 24, gap: 24 },
   metaLine: { fontSize: 11, fontWeight: '700', color: colors.slate400 },

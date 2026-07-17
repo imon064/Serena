@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../../lib/theme';
 import { useAuth } from '../../context/AuthContext';
@@ -21,10 +21,7 @@ export const ProfileTab: React.FC = () => {
             <Feather name="bell" size={20} color={colors.brand} />
           </TouchableOpacity>
           <View style={styles.smallAvatar}>
-            <Image 
-              source={{ uri: 'https://i.pravatar.cc/100?img=11' }} 
-              style={styles.avatarImage} 
-            />
+            <Feather name="user" size={18} color={colors.slate400} />
           </View>
         </View>
       </View>
@@ -32,10 +29,9 @@ export const ProfileTab: React.FC = () => {
       {/* Profile Section */}
       <View style={styles.profileSection}>
         <View style={styles.largeAvatarContainer}>
-          <Image 
-            source={{ uri: 'https://i.pravatar.cc/100?img=11' }} 
-            style={styles.largeAvatarImage} 
-          />
+          <View style={styles.largeAvatarImage}>
+            <Feather name="user" size={40} color={colors.slate400} />
+          </View>
           <View style={styles.badgeContainer}>
             <Feather name="check" size={12} color={colors.white} />
           </View>
@@ -220,8 +216,10 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.border,
+    backgroundColor: colors.brandFaint,
     overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatarImage: {
     width: '100%',
@@ -240,6 +238,9 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     borderWidth: 2,
     borderColor: colors.brand,
+    backgroundColor: colors.brandFaint,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   badgeContainer: {
     position: 'absolute',

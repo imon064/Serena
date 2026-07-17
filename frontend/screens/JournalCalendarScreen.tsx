@@ -1,7 +1,15 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { colors } from '../lib/theme';
 import { useJournal } from '../context/JournalContext';
+import { summarizeJournal } from '../lib/ai';
 import { CalendarGrid } from '../components/CalendarGrid';
 import { BottomNav, Tab } from '../components/BottomNav';
 import { Icon } from '../components/Icon';
@@ -46,6 +54,48 @@ export const JournalCalendarScreen: React.FC<Props> = ({
   const monthPrefix = `${view.year}-${String(view.month + 1).padStart(2, '0')}`;
   const monthCount = journalDates.filter((d) => d.startsWith(monthPrefix)).length;
 
+  // AI reflection per month. Cached by month so tapping again doesn't re-call
+  // the API, and reset naturally when the user changes months.
+  const [reflections, setReflections] = useState<Record<string, string>>({});
+  const [loadingReflection, setLoadingReflection] = useState(false);
+  const reflection = reflections[monthPrefix];
+
+  const handleGenerateReflection = async () => {
+    if (loadingReflection) return;
+    // If we already have one for this month, tapping again regenerates it.
+    const monthEntries = Object.values(entries)
+      .filter((e) => e.date.startsWith(monthPrefix))
+      .map((e) => ({
+        date: e.date,
+        title: e.title,
+        content: e.content,
+        mood: e.mood,
+      }));
+
+    if (monthEntries.length === 0) {
+      setReflections((prev) => ({
+        ...prev,
+        [monthPrefix]:
+          'No journal entries yet this month. Write a few and tap here — I’ll gently reflect them back to you. 🌿',
+      }));
+      return;
+    }
+
+    setLoadingReflection(true);
+    try {
+      const summary = await summarizeJournal(monthEntries, monthName);
+      setReflections((prev) => ({ ...prev, [monthPrefix]: summary }));
+    } catch {
+      setReflections((prev) => ({
+        ...prev,
+        [monthPrefix]:
+          'I couldn’t gather your reflection just now. Take a breath and try tapping again in a moment. 🌿',
+      }));
+    } finally {
+      setLoadingReflection(false);
+    }
+  };
+
   const handleAction = () => {
     if (hasJournal) onOpenEntry(selectedDate);
     else onCreateEntry(selectedDate);
@@ -54,15 +104,6 @@ export const JournalCalendarScreen: React.FC<Props> = ({
   return (
     <View style={styles.screen}>
       <View style={styles.card}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Pressable onPress={onBack} style={styles.circleBtn}>
-            <Icon name="back" size={18} color={colors.slate600} />
-          </Pressable>
-          <Text style={styles.headerTitle}>Select Date</Text>
-          <View style={{ width: 40 }} />
-        </View>
-
         <ScrollView
           style={styles.flex}
           contentContainerStyle={styles.body}
@@ -107,18 +148,35 @@ export const JournalCalendarScreen: React.FC<Props> = ({
             </Text>
           </Pressable>
 
-          {/* Reflection card */}
-          <View style={styles.reflectCard}>
+          {/* Reflection card — tap to generate an AI reflection of the month */}
+          <Pressable
+            onPress={handleGenerateReflection}
+            disabled={loadingReflection}
+            style={({ pressed }) => [
+              styles.reflectCard,
+              pressed && styles.reflectPressed,
+            ]}
+          >
             <View style={styles.bookTile}>
               <Icon name="book" size={18} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.reflectTitle}>Your {monthName} Reflection</Text>
-              <Text style={styles.reflectSub}>
-                {monthCount} journals completed this month
-              </Text>
+
+              {loadingReflection ? (
+                <View style={styles.reflectLoadingRow}>
+                  <ActivityIndicator size="small" color={colors.brand} />
+                  <Text style={styles.reflectSub}>Reflecting on your month…</Text>
+                </View>
+              ) : reflection ? (
+                <Text style={styles.reflectSummary}>{reflection}</Text>
+              ) : (
+                <Text style={styles.reflectSub}>
+                  {monthCount} journals this month · tap for an AI reflection ✨
+                </Text>
+              )}
             </View>
-          </View>
+          </Pressable>
 
           {/* Stats row */}
           <View style={styles.statsRow}>
@@ -164,7 +222,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: { fontSize: 18, fontWeight: '800', color: colors.brand },
-  body: { paddingHorizontal: 24, paddingBottom: 24, gap: 20 },
+  body: { paddingHorizontal: 24, paddingTop: 22, paddingBottom: 24, gap: 20 },
   calCard: {
     backgroundColor: colors.white,
     borderRadius: 24,
@@ -216,6 +274,15 @@ const styles = StyleSheet.create({
   },
   reflectTitle: { fontSize: 12, fontWeight: '800', color: colors.slate800 },
   reflectSub: { fontSize: 11, fontWeight: '600', color: colors.slate400, marginTop: 3 },
+  reflectSummary: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors.slate600,
+    marginTop: 5,
+    lineHeight: 18,
+  },
+  reflectLoadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
+  reflectPressed: { opacity: 0.6 },
   statsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 4, flexWrap: 'wrap' },
   stat: { fontSize: 10, fontWeight: '700', color: colors.slate400, letterSpacing: 0.3 },
 });

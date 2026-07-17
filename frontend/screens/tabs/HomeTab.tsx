@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../../lib/theme';
 import { useAuth } from '../../context/AuthContext';
@@ -29,10 +29,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.avatar}>
-            <Image 
-              source={{ uri: 'https://i.pravatar.cc/100?img=11' }} 
-              style={styles.avatarImage} 
-            />
+            <Feather name="user" size={22} color={colors.slate400} />
           </View>
           <View>
             <Text style={styles.greeting}>Hello {name}! 👋</Text>
@@ -50,7 +47,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
       {/* Serena AI Card */}
       <View style={styles.aiCard}>
         <View style={styles.aiIllustrationPlaceholder}>
-          <Text style={styles.aiIllustrationText}>🤖☁️</Text>
+          <Feather name="message-circle" size={56} color={colors.white} />
         </View>
         <Text style={styles.aiCardTitle}>Talk with Serena AI</Text>
         <Text style={styles.aiCardDesc}>
@@ -64,7 +61,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
       {/* My Journal Card */}
       <View style={styles.journalCard}>
         <View style={styles.journalIllustrationPlaceholder}>
-          <Text style={styles.journalIllustrationText}>📖✨</Text>
+          <Feather name="book-open" size={56} color={colors.brand} />
         </View>
         <Text style={styles.journalCardTitle}>My Journal</Text>
         <Text style={styles.journalCardDesc}>
@@ -137,8 +134,10 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.border,
+    backgroundColor: colors.brandFaint,
     overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatarImage: {
     width: '100%',
