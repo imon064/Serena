@@ -5,7 +5,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginScreen } from './screens/LoginScreen';
 import { RegisterScreen } from './screens/RegisterScreen';
-import { HomeScreen } from './screens/HomeScreen';
+import { MainScreen } from './screens/MainScreen';
 import { colors } from './lib/theme';
 
 const Root: React.FC = () => {
@@ -20,9 +20,9 @@ const Root: React.FC = () => {
     );
   }
 
-  // Signed in -> Home. Signed out -> Login/Register toggle.
+  // Signed in -> Main. Signed out -> Login/Register toggle.
   if (session) {
-    return <HomeScreen />;
+    return <MainScreen />;
   }
 
   return screen === 'login' ? (
