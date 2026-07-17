@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../lib/theme';
 import { useJournal } from '../context/JournalContext';
@@ -25,7 +25,26 @@ export const JournalCalendarScreen: React.FC<Props> = ({
   const { selectedDate, setSelectedDate, entries, streakCount } = useJournal();
   const journalDates = Object.keys(entries);
   const hasJournal = !!entries[selectedDate];
-  const monthCount = journalDates.filter((d) => d.startsWith('2023-10')).length;
+
+  // The month currently displayed by the calendar. Starts on the selected
+  // date's month, and the chevrons move it backward/forward.
+  const [selYear, selMonth] = selectedDate.split('-').map(Number);
+  const [view, setView] = useState({ year: selYear, month: selMonth - 1 });
+
+  const goToMonth = (delta: number) =>
+    setView((v) => {
+      const total = v.year * 12 + v.month + delta;
+      return { year: Math.floor(total / 12), month: ((total % 12) + 12) % 12 };
+    });
+
+  const viewFirst = new Date(view.year, view.month, 1);
+  const monthLabel = viewFirst.toLocaleDateString('en-US', {
+    month: 'long',
+    year: 'numeric',
+  });
+  const monthName = viewFirst.toLocaleDateString('en-US', { month: 'long' });
+  const monthPrefix = `${view.year}-${String(view.month + 1).padStart(2, '0')}`;
+  const monthCount = journalDates.filter((d) => d.startsWith(monthPrefix)).length;
 
   const handleAction = () => {
     if (hasJournal) onOpenEntry(selectedDate);
@@ -53,23 +72,25 @@ export const JournalCalendarScreen: React.FC<Props> = ({
           <View style={styles.calCard}>
             <View style={styles.calHeader}>
               <View>
-                <Text style={styles.month}>October 2023</Text>
+                <Text style={styles.month}>{monthLabel}</Text>
                 <View style={styles.streakRow}>
                   <Icon name="flame" size={12} />
                   <Text style={styles.streakText}>Day {streakCount} streak</Text>
                 </View>
               </View>
               <View style={styles.chevrons}>
-                <View style={styles.chevBtn}>
+                <Pressable onPress={() => goToMonth(-1)} style={styles.chevBtn}>
                   <Icon name="chevronLeft" size={18} color={colors.slate600} />
-                </View>
-                <View style={styles.chevBtn}>
+                </Pressable>
+                <Pressable onPress={() => goToMonth(1)} style={styles.chevBtn}>
                   <Icon name="chevronRight" size={18} color={colors.slate600} />
-                </View>
+                </Pressable>
               </View>
             </View>
 
             <CalendarGrid
+              year={view.year}
+              month={view.month}
               selectedDate={selectedDate}
               onSelectDate={setSelectedDate}
               journalDates={journalDates}
@@ -92,7 +113,7 @@ export const JournalCalendarScreen: React.FC<Props> = ({
               <Icon name="book" size={18} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.reflectTitle}>Your October Reflection</Text>
+              <Text style={styles.reflectTitle}>Your {monthName} Reflection</Text>
               <Text style={styles.reflectSub}>
                 {monthCount} journals completed this month
               </Text>
@@ -116,16 +137,11 @@ export const JournalCalendarScreen: React.FC<Props> = ({
 };
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.lavender, alignItems: 'center', justifyContent: 'center', padding: 16 },
+  screen: { flex: 1, backgroundColor: colors.lavenderLight },
   card: {
     width: '100%',
-    maxWidth: 420,
     flex: 1,
-    maxHeight: 820,
     backgroundColor: colors.lavenderLight,
-    borderRadius: 32,
-    borderWidth: 1,
-    borderColor: colors.slate100,
     overflow: 'hidden',
   },
   flex: { flex: 1 },

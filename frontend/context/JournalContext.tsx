@@ -24,8 +24,8 @@ interface JournalContextType {
 const JournalContext = createContext<JournalContextType | undefined>(undefined);
 
 const DUMMY_ENTRIES: Record<string, JournalEntry> = {
-  '2023-10-02': {
-    date: '2023-10-02',
+  '2026-07-02': {
+    date: '2026-07-02',
     title: 'Focus and Productivity',
     content:
       'Started the morning with a clear plan. Worked through my top priorities without getting distracted. Felt a great sense of accomplishment by the end of the day.',
@@ -35,8 +35,8 @@ const DUMMY_ENTRIES: Record<string, JournalEntry> = {
     prompt: 'What was your biggest win today?',
     readingTime: '1 min read',
   },
-  '2023-10-05': {
-    date: '2023-10-05',
+  '2026-07-05': {
+    date: '2026-07-05',
     title: 'A Bit Overwhelmed',
     content:
       'Had a lot on my plate today. Felt a bit anxious about the upcoming project deadline. Taking some deep breaths and trying to break tasks down into smaller steps.',
@@ -46,8 +46,8 @@ const DUMMY_ENTRIES: Record<string, JournalEntry> = {
     prompt: 'How can you show yourself kindness today?',
     readingTime: '2 min read',
   },
-  '2023-10-11': {
-    date: '2023-10-11',
+  '2026-07-11': {
+    date: '2026-07-11',
     title: 'Midweek Reflection',
     content:
       'Taking a moment to pause and reflect. The week is going by fast, but I am learning to appreciate the little breaks in between meetings. Feeling grounded and hopeful.',
@@ -57,8 +57,8 @@ const DUMMY_ENTRIES: Record<string, JournalEntry> = {
     prompt: 'What are you looking forward to this week?',
     readingTime: '1 min read',
   },
-  '2023-10-20': {
-    date: '2023-10-20',
+  '2026-07-20': {
+    date: '2026-07-20',
     title: 'Relaxing Evening',
     content:
       'Had a wonderful evening catching up with an old friend. It is nice to disconnect from work and just enjoy good conversation. Feeling very content.',
@@ -68,8 +68,8 @@ const DUMMY_ENTRIES: Record<string, JournalEntry> = {
     prompt: 'Who is someone you are glad is in your life?',
     readingTime: '2 min read',
   },
-  '2023-10-24': {
-    date: '2023-10-24',
+  '2026-07-24': {
+    date: '2026-07-24',
     title: 'Good Morning Entry',
     content:
       'Woke up feeling unusually calm today. The sunlight was filtering through the curtains in a way that made the whole room feel warm and safe. I took five deep breaths before even checking my phone, which is a big win for me.\n\nI noticed a slight tension in my shoulders when I thought about the meeting at 10 AM, but instead of letting it spiral, I acknowledged it and told myself, "I am prepared for whatever happens."',
@@ -80,8 +80,8 @@ const DUMMY_ENTRIES: Record<string, JournalEntry> = {
       'What is one small thing that brought you peace today, no matter how brief?',
     readingTime: '2 min read',
   },
-  '2023-10-28': {
-    date: '2023-10-28',
+  '2026-07-28': {
+    date: '2026-07-28',
     title: 'Weekend Calm',
     content:
       'Woke up early and walked in the park. The cool autumn air was refreshing. Preparing for a restful weekend of reading and journaling.',
@@ -98,7 +98,7 @@ export const JournalProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [entries, setEntries] =
     useState<Record<string, JournalEntry>>(DUMMY_ENTRIES);
-  const [selectedDate, setSelectedDate] = useState<string>('2023-10-24');
+  const [selectedDate, setSelectedDate] = useState<string>('2026-07-24');
   const [streakCount, setStreakCount] = useState<number>(24);
 
   const calculateReadingTime = (text: string): string => {

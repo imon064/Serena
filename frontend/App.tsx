@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, LogBox, Platform, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  LogBox,
+  Platform,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -14,14 +20,12 @@ LogBox.ignoreLogs([
   'Code challenge method will default to use plain instead of sha256',
 ]);
 
-// On web, center the phone-style app in a 480px column with a dark backdrop
-// (matches the in-app screens' design). The landing page is NOT wrapped in this
-// — it stays full-width and responsive like a real web marketing page.
-const PhoneFrame: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <View style={styles.rootWrapper}>
-    <View style={styles.appContainer}>{children}</View>
-  </View>
-);
+// Wraps the app screens so they fill the whole viewport on every platform:
+// full-width and full-height on phones, native, AND desktop/laptop browsers.
+// No centered card or max-width — the app uses the entire window.
+const PhoneFrame: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return <View style={styles.appContainer}>{children}</View>;
+};
 
 const Root: React.FC = () => {
   const { session, loading } = useAuth();
@@ -129,16 +133,10 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  rootWrapper: {
-    flex: 1,
-    backgroundColor: '#121212',
-    ...(Platform.OS === 'web' ? { alignItems: 'center' } : {}),
-  },
   appContainer: {
     flex: 1,
     backgroundColor: colors.bg,
     width: '100%',
-    ...(Platform.OS === 'web' ? { maxWidth: 480 } : {}),
   },
   flex: { flex: 1, backgroundColor: colors.bg },
   center: {

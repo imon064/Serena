@@ -10,6 +10,7 @@ import {
 import { colors } from '../lib/theme';
 import { useJournal } from '../context/JournalContext';
 import { Icon, IconName } from '../components/Icon';
+import { RichText } from '../components/RichText';
 
 interface Props {
   mode: 'new' | 'edit';
@@ -47,6 +48,9 @@ export const JournalEditorScreen: React.FC<Props> = ({
   const [addingTag, setAddingTag] = useState(false);
   const [newTag, setNewTag] = useState('');
   const [error, setError] = useState('');
+  // Current cursor / highlighted range inside the "Your thoughts" field, so the
+  // toolbar can wrap whatever text you've selected.
+  const [selection, setSelection] = useState({ start: 0, end: 0 });
 
   const dateLabel = useMemo(() => {
     const d = new Date(date);
@@ -81,6 +85,31 @@ export const JournalEditorScreen: React.FC<Props> = ({
   };
 
   const customTags = tags.filter((t) => !INITIAL_TAGS.includes(t));
+
+  // Toolbar buttons wrap the selected text (or insert a placeholder at the
+  // cursor). The markers render as real formatting in the journal detail view.
+  const applyFormat = (ic: IconName) => {
+    setContent((c) => {
+      const start = Math.min(selection.start, selection.end);
+      const end = Math.max(selection.start, selection.end);
+      const sel = c.slice(start, end);
+
+      // Line-level markers (quote / bullet) go at the start of the line.
+      if (ic === 'quote' || ic === 'list') {
+        const prefix = ic === 'quote' ? '> ' : '- ';
+        const lineStart = c.lastIndexOf('\n', start - 1) + 1;
+        return c.slice(0, lineStart) + prefix + c.slice(lineStart);
+      }
+
+      let wrapped: string;
+      if (ic === 'bold') wrapped = `**${sel || 'bold text'}**`;
+      else if (ic === 'italic') wrapped = `*${sel || 'italic text'}*`;
+      else if (ic === 'link') wrapped = `[${sel || 'link text'}](https://)`;
+      else return c;
+
+      return c.slice(0, start) + wrapped + c.slice(end);
+    });
+  };
 
   return (
     <View style={styles.screen}>
@@ -165,9 +194,9 @@ export const JournalEditorScreen: React.FC<Props> = ({
             <View style={styles.editorBox}>
               <View style={styles.toolbar}>
                 {TOOLBAR.map((ic) => (
-                  <Text key={ic} style={styles.toolIcon}>
+                  <Pressable key={ic} onPress={() => applyFormat(ic)}>
                     <Icon name={ic} size={15} color={colors.slate500} />
-                  </Text>
+                  </Pressable>
                 ))}
                 <View style={{ flex: 1 }} />
                 <Pressable onPress={() => setContent((c) => c.slice(0, -10))}>
@@ -177,6 +206,7 @@ export const JournalEditorScreen: React.FC<Props> = ({
               <TextInput
                 value={content}
                 onChangeText={setContent}
+                onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
                 placeholder="Start writing here..."
                 placeholderTextColor={colors.slate400}
                 multiline
@@ -184,6 +214,17 @@ export const JournalEditorScreen: React.FC<Props> = ({
                 style={styles.textarea}
               />
             </View>
+
+            {/* Live preview: shows how the formatting will actually look. */}
+            {content.trim() !== '' && (
+              <View style={styles.previewBox}>
+                <View style={styles.previewHeader}>
+                  <Icon name="sparkles" size={13} />
+                  <Text style={styles.previewLabel}>PREVIEW</Text>
+                </View>
+                <RichText content={content} baseStyle={styles.previewText} />
+              </View>
+            )}
           </View>
 
           {/* Tags */}
@@ -251,16 +292,11 @@ export const JournalEditorScreen: React.FC<Props> = ({
 };
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.lavender, alignItems: 'center', justifyContent: 'center', padding: 16 },
+  screen: { flex: 1, backgroundColor: colors.white },
   card: {
     width: '100%',
-    maxWidth: 420,
     flex: 1,
-    maxHeight: 820,
     backgroundColor: colors.white,
-    borderRadius: 32,
-    borderWidth: 1,
-    borderColor: colors.slate100,
     overflow: 'hidden',
   },
   header: {
@@ -375,6 +411,17 @@ const styles = StyleSheet.create({
     minHeight: 160,
     lineHeight: 22,
   },
+  previewBox: {
+    borderWidth: 1,
+    borderColor: colors.brandTint,
+    backgroundColor: colors.brandLight,
+    borderRadius: 18,
+    padding: 16,
+    gap: 10,
+  },
+  previewHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  previewLabel: { fontSize: 10, fontWeight: '800', letterSpacing: 1.5, color: colors.brand },
+  previewText: { fontSize: 14, color: colors.slate800, lineHeight: 22 },
   addNew: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   addNewText: { fontSize: 12, fontWeight: '800', color: colors.brand },
   addRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },

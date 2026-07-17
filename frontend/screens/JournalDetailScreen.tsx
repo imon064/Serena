@@ -2,6 +2,8 @@ import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../lib/theme';
 import { useJournal } from '../context/JournalContext';
+import { notify } from '../lib/notify';
+import { RichText } from '../components/RichText';
 import { InsightCard } from '../components/InsightCard';
 import { MoodChart } from '../components/MoodChart';
 import { BottomNav, Tab } from '../components/BottomNav';
@@ -77,9 +79,12 @@ export const JournalDetailScreen: React.FC<Props> = ({
             <Text style={styles.headerSub}>JOURNAL DETAIL</Text>
           </View>
           <View style={styles.headerActions}>
-            <View style={styles.smallBtn}>
+            <Pressable
+              onPress={() => notify('Sharing your journal is coming soon.')}
+              style={styles.smallBtn}
+            >
               <Icon name="share" size={16} color={colors.slate600} />
-            </View>
+            </Pressable>
             <Pressable onPress={() => onEdit(date)} style={styles.smallBtnBrand}>
               <Icon name="edit" size={15} color={colors.brand} />
             </Pressable>
@@ -111,7 +116,7 @@ export const JournalDetailScreen: React.FC<Props> = ({
 
           {/* Journal text */}
           <View style={styles.textCard}>
-            <Text style={styles.content}>{entry.content}</Text>
+            <RichText content={entry.content} baseStyle={styles.content} />
           </View>
 
           <InsightCard mood={moodLabel(entry.mood)} />
@@ -130,16 +135,11 @@ export const JournalDetailScreen: React.FC<Props> = ({
 };
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.lavender, alignItems: 'center', justifyContent: 'center', padding: 16 },
+  screen: { flex: 1, backgroundColor: colors.bg },
   card: {
     width: '100%',
-    maxWidth: 420,
     flex: 1,
-    maxHeight: 820,
     backgroundColor: colors.bg,
-    borderRadius: 32,
-    borderWidth: 1,
-    borderColor: colors.slate100,
     overflow: 'hidden',
   },
   header: {

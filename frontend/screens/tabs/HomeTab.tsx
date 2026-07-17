@@ -1,18 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../../lib/theme';
 import { useAuth } from '../../context/AuthContext';
+import { getFirstName } from '../../lib/userName';
+import { notify } from '../../lib/notify';
 
 interface HomeTabProps {
   onNavigateToChat: () => void;
+  onNavigateToJournal: () => void;
 }
 
-export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateToChat }) => {
+export const HomeTab: React.FC<HomeTabProps> = ({
+  onNavigateToChat,
+  onNavigateToJournal,
+}) => {
   const { user } = useAuth();
-  
-  // Hardcoded for dummy UI based on Figma
-  const name = "Darren";
+
+  // First name of the signed-in user (from Supabase user metadata).
+  const name = getFirstName(user);
+
+  // Whether the daily reflection is bookmarked (local UI state).
+  const [reflectionSaved, setReflectionSaved] = useState(false);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -30,7 +39,10 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateToChat }) => {
             <Text style={styles.subtitle}>How are you feeling today?</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.notificationButton}>
+        <TouchableOpacity
+          style={styles.notificationButton}
+          onPress={() => notify("You're all caught up — no new notifications.")}
+        >
           <Feather name="bell" size={20} color={colors.brand} />
         </TouchableOpacity>
       </View>
@@ -58,7 +70,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateToChat }) => {
         <Text style={styles.journalCardDesc}>
           Capture today's thoughts, emotions, and reflections.
         </Text>
-        <TouchableOpacity style={styles.journalCardButton}>
+        <TouchableOpacity style={styles.journalCardButton} onPress={onNavigateToJournal}>
           <Text style={styles.journalCardButtonText}>Write Today's Journal</Text>
         </TouchableOpacity>
       </View>
@@ -72,8 +84,12 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateToChat }) => {
           <Text style={styles.reflectionTitle}>Daily Reflection</Text>
           <Text style={styles.reflectionQuote}>"Every small step toward healing is still progress."</Text>
         </View>
-        <TouchableOpacity>
-          <Feather name="bookmark" size={20} color={colors.slate400} />
+        <TouchableOpacity onPress={() => setReflectionSaved((s) => !s)}>
+          <Feather
+            name="bookmark"
+            size={20}
+            color={reflectionSaved ? colors.brand : colors.slate400}
+          />
         </TouchableOpacity>
       </View>
 
@@ -81,12 +97,12 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateToChat }) => {
       <View style={styles.historyCard}>
         <View style={styles.historyHeader}>
           <Text style={styles.historyTitle}>Yesterday</Text>
-          <Text style={styles.historyDate}>Oct 24, 2023</Text>
+          <Text style={styles.historyDate}>Jul 24, 2026</Text>
         </View>
         <Text style={styles.historyPreview} numberOfLines={2}>
           I felt more relaxed after taking time to breathe. The morning meditation really...
         </Text>
-        <TouchableOpacity style={styles.historyButton}>
+        <TouchableOpacity style={styles.historyButton} onPress={onNavigateToJournal}>
           <Text style={styles.historyButtonText}>Continue Writing</Text>
           <Feather name="arrow-right" size={16} color={colors.brand} />
         </TouchableOpacity>

@@ -3,12 +3,13 @@ import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from 'rea
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../../lib/theme';
 import { useAuth } from '../../context/AuthContext';
+import { getFullName } from '../../lib/userName';
 
 export const ProfileTab: React.FC = () => {
-  const { signOut } = useAuth();
-  
-  // Dummy data based on Figma
-  const name = "Jason";
+  const { signOut, user } = useAuth();
+
+  // Full name of the signed-in user (from Supabase user metadata).
+  const name = getFullName(user);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>

@@ -16,9 +16,14 @@ export const MainScreen: React.FC = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'Home':
-        return <HomeTab onNavigateToChat={() => setActiveTab('AIChat')} />;
+        return (
+          <HomeTab
+            onNavigateToChat={() => setActiveTab('AIChat')}
+            onNavigateToJournal={() => setActiveTab('Journal')}
+          />
+        );
       case 'AIChat':
-        return <AIChatTab onNavigateToHome={() => setActiveTab('Home')} />;
+        return <AIChatTab />;
       case 'Journal':
         return <JournalTab />;
       case 'Profile':

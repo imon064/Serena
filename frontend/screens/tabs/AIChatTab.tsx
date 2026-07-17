@@ -5,10 +5,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../../lib/theme';
-
-interface AIChatTabProps {
-  onNavigateToHome: () => void;
-}
+import { notify } from '../../lib/notify';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -19,7 +16,7 @@ const DUMMY_HISTORY = [
   { id: '4', title: 'Social Settings', preview: 'Remember the grounding...', time: '2:00 PM', date: 'YESTERDAY' },
 ];
 
-export const AIChatTab: React.FC<AIChatTabProps> = ({ onNavigateToHome }) => {
+export const AIChatTab: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const slideAnim = useRef(new Animated.Value(-SCREEN_WIDTH * 0.8)).current;
   
@@ -59,6 +56,14 @@ export const AIChatTab: React.FC<AIChatTabProps> = ({ onNavigateToHome }) => {
     setInputText('');
   };
 
+  // Send a canned message (used by the emotion chips) as if the user typed it.
+  const sendQuick = (text: string) => {
+    setMessages((prev) => [
+      ...prev,
+      { id: Date.now().toString(), text, sender: 'user' },
+    ]);
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -68,13 +73,10 @@ export const AIChatTab: React.FC<AIChatTabProps> = ({ onNavigateToHome }) => {
         </TouchableOpacity>
         
         <View style={styles.headerCenter}>
-          <TouchableOpacity onPress={onNavigateToHome} style={styles.backButton}>
-             <Feather name="arrow-left" size={20} color={colors.dark} />
-          </TouchableOpacity>
           <View style={styles.avatarContainer}>
-            <Image 
-              source={{ uri: 'https://i.pravatar.cc/100?img=5' }} 
-              style={styles.avatarImage} 
+            <Image
+              source={{ uri: 'https://i.pravatar.cc/100?img=5' }}
+              style={styles.avatarImage}
             />
           </View>
           <View style={styles.headerTextContainer}>
@@ -86,9 +88,8 @@ export const AIChatTab: React.FC<AIChatTabProps> = ({ onNavigateToHome }) => {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.headerIconButton}>
-          <Feather name="more-vertical" size={24} color={colors.dark} />
-        </TouchableOpacity>
+        {/* Spacer keeps "Serena AI" centered now that the right-side button is gone. */}
+        <View style={styles.headerIconButton} />
       </View>
 
       {/* Main Chat Area */}
@@ -114,18 +115,18 @@ export const AIChatTab: React.FC<AIChatTabProps> = ({ onNavigateToHome }) => {
             {/* Emotion Chips */}
             <View style={styles.chipsContainer}>
               <View style={styles.chipRow}>
-                <TouchableOpacity style={styles.chip}>
+                <TouchableOpacity style={styles.chip} onPress={() => sendQuick('😌 Peaceful')}>
                   <Text style={styles.chipText}>😌 Peaceful</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.chip}>
+                <TouchableOpacity style={styles.chip} onPress={() => sendQuick('😵‍💫 Anxious')}>
                   <Text style={styles.chipText}>😵‍💫 Anxious</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.chipRow}>
-                <TouchableOpacity style={styles.chip}>
+                <TouchableOpacity style={styles.chip} onPress={() => sendQuick('🌪️ Overwhelmed')}>
                   <Text style={styles.chipText}>🌪️ Overwhelmed</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.chip}>
+                <TouchableOpacity style={styles.chip} onPress={() => sendQuick('🌿 Reflective')}>
                   <Text style={styles.chipText}>🌿 Reflective</Text>
                 </TouchableOpacity>
               </View>
@@ -156,7 +157,10 @@ export const AIChatTab: React.FC<AIChatTabProps> = ({ onNavigateToHome }) => {
 
       {/* Input Area */}
       <View style={styles.inputArea}>
-        <TouchableOpacity style={styles.attachButton}>
+        <TouchableOpacity
+          style={styles.attachButton}
+          onPress={() => notify('Attachments are coming soon.')}
+        >
           <Feather name="plus" size={24} color={colors.slate500} />
         </TouchableOpacity>
         
@@ -168,7 +172,10 @@ export const AIChatTab: React.FC<AIChatTabProps> = ({ onNavigateToHome }) => {
             value={inputText}
             onChangeText={setInputText}
           />
-          <TouchableOpacity style={styles.micButton}>
+          <TouchableOpacity
+            style={styles.micButton}
+            onPress={() => notify('Voice input is coming soon.')}
+          >
             <Feather name="mic" size={20} color={colors.slate500} />
           </TouchableOpacity>
         </View>
