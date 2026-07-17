@@ -18,6 +18,8 @@ WebBrowser.maybeCompleteAuthSession();
 // Where Google should send the user back to. In Expo Go this resolves to the
 // current exp:// URL; in a standalone build it uses the "serena" scheme.
 const redirectTo = makeRedirectUri();
+// TEMP: copy this exact value into Supabase → Auth → URL Configuration → Redirect URLs
+console.log('OAuth redirectTo =', redirectTo);
 
 // Keep tokens fresh while the app is in the foreground (recommended on RN).
 AppState.addEventListener('change', (state) => {
