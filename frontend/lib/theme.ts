@@ -1,7 +1,9 @@
 export const colors = {
   brand: '#6D3EF5',
   brandHover: '#5A2EE3',
-  brandLight: '#F5F3FF',
+  brandCard: '#9F7CFA',
+  brandLight: '#F3EFFF',
+  brandFaint: '#F9F8FF',
   dark: '#110B30',
   slate500: '#64748B',
   slate400: '#94A3B8',
@@ -10,7 +12,7 @@ export const colors = {
   white: '#FFFFFF',
   red: '#DC2626',
   redBg: '#FEF2F2',
-  bg: '#FAF9FF',
+  bg: '#F8F7FC',
   // Playful accents used by the landing page.
   yellow: '#FFD34E',
   yellowSoft: '#FFE9A6',

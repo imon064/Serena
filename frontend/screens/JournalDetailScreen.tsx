@@ -12,6 +12,8 @@ interface Props {
   onBack: () => void;
   onEdit: (date: string) => void;
   onChangeTab: (tab: Tab) => void;
+  // When true, the built-in bottom nav is hidden (host screen provides one).
+  hideNav?: boolean;
 }
 
 const moodEmoji = (mood: string) => {
@@ -35,6 +37,7 @@ export const JournalDetailScreen: React.FC<Props> = ({
   onBack,
   onEdit,
   onChangeTab,
+  hideNav = false,
 }) => {
   const { getEntryForDate, streakCount } = useJournal();
   const entry = getEntryForDate(date);
@@ -120,7 +123,7 @@ export const JournalDetailScreen: React.FC<Props> = ({
           </Pressable>
         </ScrollView>
 
-        <BottomNav activeTab="home" onChangeTab={onChangeTab} />
+        {!hideNav && <BottomNav activeTab="home" onChangeTab={onChangeTab} />}
       </View>
     </View>
   );

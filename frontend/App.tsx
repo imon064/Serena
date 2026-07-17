@@ -1,13 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, LogBox, Platform, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LandingScreen } from './screens/LandingScreen';
 import { LoginScreen } from './screens/LoginScreen';
 import { RegisterScreen } from './screens/RegisterScreen';
-import { AuthedApp } from './screens/AuthedApp';
+import { MainScreen } from './screens/MainScreen';
 import { colors } from './lib/theme';
+
+LogBox.ignoreLogs([
+  'WebCrypto API is not supported',
+  'Code challenge method will default to use plain instead of sha256',
+]);
+
+// On web, center the phone-style app in a 480px column with a dark backdrop
+// (matches the in-app screens' design). The landing page is NOT wrapped in this
+// — it stays full-width and responsive like a real web marketing page.
+const PhoneFrame: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <View style={styles.rootWrapper}>
+    <View style={styles.appContainer}>{children}</View>
+  </View>
+);
 
 const Root: React.FC = () => {
   const { session, loading } = useAuth();
@@ -23,12 +37,16 @@ const Root: React.FC = () => {
     );
   }
 
-  // Signed in -> the journal app.
+  // Signed in -> the main tabbed app (Home / AI Chat / Journal / Profile).
   if (session) {
-    return <AuthedApp />;
+    return (
+      <PhoneFrame>
+        <MainScreen />
+      </PhoneFrame>
+    );
   }
 
-  // Signed out -> Landing first, then Login/Register.
+  // Signed out -> full-width landing first, then Login/Register in the frame.
   if (screen === 'landing') {
     return (
       <LandingScreen
@@ -38,10 +56,14 @@ const Root: React.FC = () => {
     );
   }
 
-  return screen === 'login' ? (
-    <LoginScreen onGoToRegister={() => setScreen('register')} />
-  ) : (
-    <RegisterScreen onGoToLogin={() => setScreen('login')} />
+  return (
+    <PhoneFrame>
+      {screen === 'login' ? (
+        <LoginScreen onGoToRegister={() => setScreen('register')} />
+      ) : (
+        <RegisterScreen onGoToLogin={() => setScreen('login')} />
+      )}
+    </PhoneFrame>
   );
 };
 
@@ -107,6 +129,17 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  rootWrapper: {
+    flex: 1,
+    backgroundColor: '#121212',
+    ...(Platform.OS === 'web' ? { alignItems: 'center' } : {}),
+  },
+  appContainer: {
+    flex: 1,
+    backgroundColor: colors.bg,
+    width: '100%',
+    ...(Platform.OS === 'web' ? { maxWidth: 480 } : {}),
+  },
   flex: { flex: 1, backgroundColor: colors.bg },
   center: {
     flex: 1,

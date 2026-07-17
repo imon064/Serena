@@ -11,6 +11,8 @@ interface Props {
   onCreateEntry: (date: string) => void;
   onOpenEntry: (date: string) => void;
   onChangeTab: (tab: Tab) => void;
+  // When true, the built-in bottom nav is hidden (host screen provides one).
+  hideNav?: boolean;
 }
 
 export const JournalCalendarScreen: React.FC<Props> = ({
@@ -18,6 +20,7 @@ export const JournalCalendarScreen: React.FC<Props> = ({
   onCreateEntry,
   onOpenEntry,
   onChangeTab,
+  hideNav = false,
 }) => {
   const { selectedDate, setSelectedDate, entries, streakCount } = useJournal();
   const journalDates = Object.keys(entries);
@@ -106,7 +109,7 @@ export const JournalCalendarScreen: React.FC<Props> = ({
           </View>
         </ScrollView>
 
-        <BottomNav activeTab="journal" onChangeTab={onChangeTab} />
+        {!hideNav && <BottomNav activeTab="journal" onChangeTab={onChangeTab} />}
       </View>
     </View>
   );
